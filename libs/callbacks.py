@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 # load libs
+import base64
 try:
     import requests
     from PIL import Image

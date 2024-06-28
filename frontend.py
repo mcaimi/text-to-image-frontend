@@ -2,7 +2,6 @@
 
 # load libraries
 import os,sys
-import base64
 try:
     from fastapi import FastAPI
     from fastapi.responses import RedirectResponse
