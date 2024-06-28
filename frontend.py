@@ -18,7 +18,7 @@ except Exception as e:
 # KServe is serverless actually
 INFER_URL = os.environ.get("INFER_URL", "localhost")
 MODEL_NAME = os.environ.get("MODEL_NAME", "DreamShaper_8_pruned.safetensors")
-RUN_LOCALLY = os.environ.get("RUN_LOCALLY", False)
+RUN_LOCALLY = os.environ.get("RUN_LOCALLY", "no")
 
 # this is the inference method exposed by the KServe Model Server
 infer_endpoint = f"{INFER_URL}/v1/models/model:predict"
@@ -27,7 +27,7 @@ infer_endpoint = f"{INFER_URL}/v1/models/model:predict"
 sd_ui = StableDiffusionUI(infer_endpoint)
 
 # run locally?
-if RUN_LOCALLY:
+if RUN_LOCALLY == "yes":
     sd_ui.localUi(model="/".join((GRADIO_MODELS_PATH, MODEL_NAME)))
 else:
     sd_ui.buildUi(func_callback=generate_image)

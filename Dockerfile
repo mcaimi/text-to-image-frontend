@@ -5,7 +5,7 @@ EXPOSE 8000/tcp
 ENV PORT=8000
 ENV INFER_URL="localhost/v1/models/model:predict"
 ENV MODEL_NAME="DreamShaper_8_pruned.safetensors"
-ENV RUN_LOCALLY="False"
+ENV RUN_LOCALLY="no"
 
 # Set the working directory in the container
 WORKDIR /projects
