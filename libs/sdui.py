@@ -34,6 +34,8 @@ class StableDiffusionUI(object):
     def localUi(self, model):
         try:
             import torch
+            import torch.cuda as tc
+            import torch.backends.mps as tmps
             from diffusers import StableDiffusionPipeline
         except Exception as e:
             print(f"Cannot import transformers: {e}")
@@ -41,8 +43,16 @@ class StableDiffusionUI(object):
 
         # check for GPU
         accelerator = "cpu"
-        if torch.cuda.is_available():
-            print(f"Running on GPU!")
+        if tmps.is_available():
+            print(f"Apple Metal Shaders Available!")
+            accelerator = "mps"
+            dtype = torch.float16
+            self.sd_pipeline = StableDiffusionPipeline.from_single_file(model, torch_dtype=dtype, use_safetensors=True)
+        elif tc.is_available():
+            device_name = tc.get_device_name()
+            device_capabilities = tc.get_device_capability()
+            device_available_mem, device_total_mem = [x / 1024**3 for x in tc.mem_get_info()]
+            print(f"A GPU is available! [{device_name} - {device_capabilities} - {device_available_mem}/{device_total_mem} GB VRAM]")
             accelerator = "cuda"
             dtype = torch.float16
             self.sd_pipeline = StableDiffusionPipeline.from_single_file(model, torch_dtype=dtype, use_safetensors=True)

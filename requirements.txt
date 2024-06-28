@@ -5,3 +5,4 @@ fastapi
 starlette
 torch
 diffusers
+transformers
