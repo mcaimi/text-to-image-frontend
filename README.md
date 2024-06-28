@@ -22,4 +22,10 @@ $ export MODEL_NAME="DreamShaper_8_pruned.safetensors" # only supports single sa
 $ fastapi dev frontend.py
 ```
 
-It tries to use any available GPU that is supported by pytorch, but it can run on CPU (*very* slowly)
+It tries to use any discovered GPU that is supported by pytorch, but it can run on CPU (*very* slowly)
+
+Tested:
+- Apple Metal Performance Shaders
+- NVIDIA CUDA
+- AMD CPU
+
