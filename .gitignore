@@ -2,3 +2,4 @@ flagged
 __pycache__
 venv
 models
+.python-version
