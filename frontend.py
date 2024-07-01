@@ -6,8 +6,6 @@ try:
     from fastapi import FastAPI
     from fastapi.responses import RedirectResponse
     import starlette.status as status
-    from libs.sdui import StableDiffusionUI, GRADIO_CUSTOM_PATH, GRADIO_MODELS_PATH
-    from libs.callbacks import generate_image
 except Exception as e:
     print(f"Caught exception: {e}")
     sys.exit(-1)
@@ -23,13 +21,17 @@ RUN_LOCALLY = os.environ.get("RUN_LOCALLY", "no")
 # this is the inference method exposed by the KServe Model Server
 infer_endpoint = f"{INFER_URL}/v1/models/model:predict"
 
-# build gradio ui object
-sd_ui = StableDiffusionUI(infer_endpoint)
-
 # run locally?
 if RUN_LOCALLY == "yes":
-    sd_ui.localUi(model="/".join((GRADIO_MODELS_PATH, MODEL_NAME)))
+    from libs.sd_ui_local import StableDiffusionUI, GRADIO_MODELS_PATH
+    # build gradio ui object
+    sd_ui = StableDiffusionUI()
+    sd_ui.buildUi(model="/".join((GRADIO_MODELS_PATH, MODEL_NAME)))
 else:
+    from libs.sd_ui_remote import StableDiffusionUI, GRADIO_CUSTOM_PATH
+    from libs.callbacks import generate_image
+    # build gradio ui object
+    sd_ui = StableDiffusionUI(infer_endpoint)
     sd_ui.buildUi(func_callback=generate_image)
 
 # build the application object

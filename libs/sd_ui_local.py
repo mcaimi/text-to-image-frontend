@@ -3,6 +3,8 @@
 # import libs
 try:
     import gradio as gr
+    import random
+    from libs.callbacks import local_prediction, RANDOM_BIT_LENGTH
 except Exception as e:
     print(f"Caught exception: {e}")
     raise e
@@ -12,26 +14,25 @@ GRADIO_CUSTOM_PATH="/sdui"
 GRADIO_MODELS_PATH="models/stable-diffusion"
 
 class StableDiffusionUI(object):
-    def __init__(self, inference_endpoint):
+    def __init__(self):
         self.sd_ui = None
         self.sd_pipeline = None
-        self.inference_endpoint = inference_endpoint
+        self.accelerator = None
 
-    # build the user interface object
-    def buildUi(self, func_callback):
-        # build gradio application
-        self.sd_ui = gr.Interface(title="Stable Diffusion Txt2Img Demo", fn=func_callback,
-                             inputs=[gr.Textbox(value=self.inference_endpoint, label="Inference URL"),
-                                    gr.Textbox(label="Prompt"),
-                                    gr.Textbox(label="Negative Prompt"),
-                                    gr.Slider(label="Denoising Steps", value=5, minimum=1, maximum=100, step=1),
-                                    gr.Number(label="Width", value=512), gr.Number(label="Height", value=512),
-                                    gr.Slider(label="Guidance Scale", value=7, minimum=1, maximum=100, step=0.5),
-                                    gr.Number(label="Seed", value=-1)],
-                             outputs=[gr.Image(label="Generated Image", format="png", show_download_button=True), gr.JSON(label="Generation Parameters")])
+    # generation callback
+    def gen_callback(self, prompt, negative_prompt, steps, width, height, cfg, seed):
+        # call local callback function
+        return local_prediction(self.sd_pipeline,
+                                prompt=prompt,
+                                negative_prompt=negative_prompt,
+                                steps=steps,
+                                width=width, height=height,
+                                seed=seed,
+                                guidance_scale=cfg,
+                                accelerator=self.accelerator)
 
     # build interface for a locally hosted model
-    def localUi(self, model):
+    def buildUi(self, model):
         try:
             import torch
             import torch.cuda as tc
@@ -42,10 +43,10 @@ class StableDiffusionUI(object):
             raise e
 
         # check for GPU
-        accelerator = "cpu"
+        self.accelerator = "cpu"
         if tmps.is_available():
             print(f"Apple Metal Shaders Available!")
-            accelerator = "mps"
+            self.accelerator = "mps"
             dtype = torch.float16
             self.sd_pipeline = StableDiffusionPipeline.from_single_file(model, torch_dtype=dtype, use_safetensors=True)
         elif tc.is_available():
@@ -53,15 +54,22 @@ class StableDiffusionUI(object):
             device_capabilities = tc.get_device_capability()
             device_available_mem, device_total_mem = [x / 1024**3 for x in tc.mem_get_info()]
             print(f"A GPU is available! [{device_name} - {device_capabilities} - {device_available_mem}/{device_total_mem} GB VRAM]")
-            accelerator = "cuda"
+            self.accelerator = "cuda"
             dtype = torch.float16
             self.sd_pipeline = StableDiffusionPipeline.from_single_file(model, torch_dtype=dtype, use_safetensors=True)
         else:
             print(f"NO GPU FOUND.")
             self.sd_pipeline = StableDiffusionPipeline.from_single_file(model, use_safetensors=True)
 
-        self.sd_pipeline.to(accelerator)
-        self.sd_ui = gr.Interface.from_pipeline(self.sd_pipeline)
+        self.sd_pipeline.to(self.accelerator)
+        self.sd_ui = gr.Interface(title="Stable Diffusion Txt2Img Demo", fn=self.gen_callback,
+                             inputs=[gr.Textbox(label="Prompt"),
+                                    gr.Textbox(label="Negative Prompt"),
+                                    gr.Slider(label="Denoising Steps", value=5, minimum=1, maximum=100, step=1),
+                                    gr.Number(label="Width", value=512), gr.Number(label="Height", value=512),
+                                    gr.Slider(label="Guidance Scale", value=7, minimum=1, maximum=100, step=0.5),
+                                    gr.Number(label="Seed", value=-1)],
+                             outputs=[gr.Image(label="Generated Image", format="png", show_download_button=True), gr.JSON(label="Generation Parameters")])
 
     # register application in FastAPI
     def registerFastApiEndpoint(self, fastApiApp, path=GRADIO_CUSTOM_PATH):
