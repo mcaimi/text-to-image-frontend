@@ -13,10 +13,10 @@ It has however a dependency on the KServe model server engine that runs in OCP A
 Normally the software will run in "remote" mode, meaning that it will use the "INFER_URL" environment variable to locate the API endpoint to use to perform inference.
 Usually that endpoint is hosted remotely on Openshift AI.
 
-If the "RUN_LOCALLY" env variable is set to True, then inference is done locally by loading the model specified in the "MODEL_NAME" env variable. It expects to find this file under a specific path:
+If the "RUN_LOCALLY" env variable is set to "yes", then inference is done locally by loading the model specified in the "MODEL_NAME" env variable. It expects to find this file under a specific path:
 
 ```bash
-$ export RUN_LOCALLY="True"
+$ export RUN_LOCALLY="no"
 $ export MODEL_NAME="DreamShaper_8_pruned.safetensors" # only supports single safetensors models
 
 $ fastapi dev frontend.py
