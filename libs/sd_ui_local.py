@@ -31,6 +31,14 @@ class StableDiffusionUI(object):
                                 guidance_scale=cfg,
                                 accelerator=self.accelerator)
 
+    # read html components
+    def html_component(self, path):
+        try:
+            with open(path) as x:
+                return "".join([ i.strip() for i in x.readlines()])
+        except:
+            return f"<h1> {path} not found </h1>"
+
     # build interface for a locally hosted model
     def buildUi(self, model):
         try:
@@ -62,14 +70,39 @@ class StableDiffusionUI(object):
             self.sd_pipeline = StableDiffusionPipeline.from_single_file(model, use_safetensors=True)
 
         self.sd_pipeline.to(self.accelerator)
-        self.sd_ui = gr.Interface(title="Stable Diffusion Txt2Img Demo", fn=self.gen_callback,
-                             inputs=[gr.Textbox(label="Prompt"),
-                                    gr.Textbox(label="Negative Prompt"),
-                                    gr.Slider(label="Denoising Steps", value=5, minimum=1, maximum=100, step=1),
-                                    gr.Number(label="Width", value=512), gr.Number(label="Height", value=512),
-                                    gr.Slider(label="Guidance Scale", value=7, minimum=1, maximum=100, step=0.5),
-                                    gr.Number(label="Seed", value=-1)],
-                             outputs=[gr.Image(label="Generated Image", format="png", show_download_button=True), gr.JSON(label="Generation Parameters")])
+        with gr.Blocks() as sdInterface:
+            gr.HTML(value=self.html_component("assets/header.html"))
+            with gr.Row():
+                with gr.Column():
+                    prompt = gr.Textbox(label="Prompt")
+                    negative_prompt = gr.Textbox(label="Negative Prompt")
+                    with gr.Row():
+                        submit_btn = gr.Button("Generate")
+                    with gr.Accordion("Additional Parameters"):
+                        steps = gr.Slider(label="Denoising Steps", value=5, minimum=1, maximum=100, step=1)
+                        cfg = gr.Slider(label="Guidance Scale", value=7, minimum=1, maximum=100, step=0.5)
+                        seed = gr.Number(label="Seed", value=-1)
+                        with gr.Row():
+                            width = gr.Number(label="Width", value=512)
+                            height = gr.Number(label="Height", value=512)
+                with gr.Column():
+                    output_image = gr.Image(label="Generated Image", format="png", show_download_button=True)
+                    json_out = gr.JSON(label="Generation Parameters")
+
+            # attach function callbacks
+            submit_btn.click(fn=self.gen_callback, inputs=[prompt, negative_prompt, steps, width, height, cfg, seed], outputs=[output_image, json_out], api_name=False)
+
+        self.sd_ui = sdInterface
+#        self.sd_ui = gr.Interface(title="Stable Diffusion Txt2Img Demo",
+#                                  article="Visit us at <a href=https://redhat.com>RedHat</a>",
+#                                  fn=self.gen_callback,
+#                                  inputs=[gr.Textbox(label="Prompt"),
+#                                    gr.Textbox(label="Negative Prompt"),
+#                                    gr.Slider(label="Denoising Steps", value=5, minimum=1, maximum=100, step=1),
+#                                    gr.Number(label="Width", value=512), gr.Number(label="Height", value=512),
+#                                    gr.Slider(label="Guidance Scale", value=7, minimum=1, maximum=100, step=0.5),
+#                                    gr.Number(label="Seed", value=-1)],
+#                             outputs=[gr.Image(label="Generated Image", format="png", show_download_button=True), gr.JSON(label="Generation Parameters")])
 
     # register application in FastAPI
     def registerFastApiEndpoint(self, fastApiApp, path=GRADIO_CUSTOM_PATH):

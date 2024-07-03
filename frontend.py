@@ -23,7 +23,7 @@ infer_endpoint = f"{INFER_URL}/v1/models/model:predict"
 
 # run locally?
 if RUN_LOCALLY == "yes":
-    from libs.sd_ui_local import StableDiffusionUI, GRADIO_MODELS_PATH
+    from libs.sd_ui_local import StableDiffusionUI, GRADIO_MODELS_PATH, GRADIO_CUSTOM_PATH
     # build gradio ui object
     sd_ui = StableDiffusionUI()
     sd_ui.buildUi(model="/".join((GRADIO_MODELS_PATH, MODEL_NAME)))
