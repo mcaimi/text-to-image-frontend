@@ -13,13 +13,17 @@ It has however a dependency on the KServe model server engine that runs in OCP A
 Normally the software will run in "remote" mode, meaning that it will use the "INFER_URL" environment variable to locate the API endpoint to use to perform inference.
 Usually that endpoint is hosted remotely on Openshift AI.
 
-If the "RUN_LOCALLY" env variable is set to "yes", then inference is done locally by loading the model specified in the "MODEL_NAME" env variable. It expects to find this file under a specific path:
+If the "RUN_LOCALLY" env variable is set to "yes", then inference is run locally using an accelerator if available and supported by pytorch.
+The application expects to find model checkpoint files in the `models/stable-diffusion` folder.
 
 ```bash
-$ export RUN_LOCALLY="no"
-$ export MODEL_NAME="DreamShaper_8_pruned.safetensors" # only supports single safetensors models
+$ export RUN_LOCALLY="yes"
 
-$ fastapi dev frontend.py
+# development mode
+$ fastapi dev
+
+# production mode
+$ fastapi run
 ```
 
 It tries to use any discovered GPU that is supported by pytorch, but it can run on CPU (*very* slowly)
