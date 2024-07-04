@@ -22,4 +22,4 @@ RUN \
   fi
 
 # Specify the command to run on container start
-ENTRYPOINT ["fastapi", "run", "./frontend.py"]
+ENTRYPOINT ["fastapi", "run"]
