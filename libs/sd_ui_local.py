@@ -14,6 +14,7 @@ except Exception as e:
 # define globals
 GRADIO_CUSTOM_PATH="/sdui"
 GRADIO_MODELS_PATH="models/stable-diffusion"
+LORA_MODELS_PATH="models/lora"
 
 class StableDiffusionUI(object):
     def __init__(self):
@@ -57,7 +58,7 @@ class StableDiffusionUI(object):
             raise gr.Error(f"Html Component {path} not found", duration=5)
 
     # load stable diffusion model from disk
-    def loadModel(self, model):
+    def loadModel(self, model, lora=None):
         if model == None:
             gr.Error(f"Please select a model from the dropdown list")
             return
@@ -72,6 +73,12 @@ class StableDiffusionUI(object):
             from diffusers import StableDiffusionPipeline
         except Exception as e:
             raise gr.Error(f"Cannot import transformers: {e}", duration=5)
+
+        # clean resources while changing model checkpoint
+        if self.sd_pipeline != None:
+            print(f"Cleaning up pipeline before loading {model}")
+            del self.sd_pipeline
+            self.sd_pipeline = None
 
         # check for GPU
         self.accelerator = "cpu"
@@ -92,6 +99,12 @@ class StableDiffusionUI(object):
             print(f"NO GPU FOUND.")
             self.sd_pipeline = StableDiffusionPipeline.from_single_file(model, use_safetensors=True)
 
+        # add low rank adaptation weights
+        if lora != None:
+            for weightsfile in lora:
+                print(f"Loading Lora: {lora}")
+                self.sd_pipeline.load_lora_weights("/".join((LORA_MODELS_PATH, weightsfile)))
+
         # send model pipeline to the appropriate compute device
         self.sd_pipeline.to(self.accelerator)
 
@@ -103,6 +116,7 @@ class StableDiffusionUI(object):
             gr.HTML(value=self.html_component("assets/header.html"))
             with gr.Row():
                 model_dropdown = gr.Dropdown(scale=2, min_width=300, multiselect=False, label="SD Model", choices=self.availableModelFiles())
+                lora_dropdown = gr.Dropdown(scale=2, min_width=300, multiselect=True, label="LoRA", choices=self.availableModelFiles(models_path=LORA_MODELS_PATH))
                 load_btn = gr.Button(value="Load Model", variant="primary")
             with gr.Row():
                 with gr.Column():
@@ -123,9 +137,16 @@ class StableDiffusionUI(object):
                     with gr.Accordion("Image Parameters", open=False):
                         json_out = gr.JSON(label="Generation Parameters")
 
+            @gr.render(inputs=lora_dropdown)
+            def show_lora_panel(choices):
+                if choices != None and len(choices) >= 2:
+                    with gr.Row():
+                        for i in choices:
+                            gr.Number(label=i, value=1.0)
+
             # attach function callbacks
             submit_btn.click(fn=self.gen_callback, inputs=[prompt, negative_prompt, steps, width, height, cfg, seed], outputs=[output_image, json_out], api_name=False)
-            load_btn.click(fn=self.loadModel, inputs=[model_dropdown])
+            load_btn.click(fn=self.loadModel, inputs=[model_dropdown, lora_dropdown])
             clear_btn.add(components=[prompt, negative_prompt, steps, width, height, cfg, seed])
 
         self.sd_ui = sdInterface

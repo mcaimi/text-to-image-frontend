@@ -6,3 +6,4 @@ starlette
 torch
 diffusers
 transformers
+peft
