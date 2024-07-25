@@ -26,6 +26,14 @@ $ fastapi dev
 $ fastapi run
 ```
 
+Run on Openshift (assuming namespace stable-diffusion and model server instance stable-diffusion):
+
+```bash
+
+$ oc new-app --name stable-diffusion-frontend -e INFER_URL=$(oc get route -n istio-system stable-diffusion-stable-diffusion -o jsonpath='{.spec.host}') quay.io/marcocaimi/stable-diffusion-frontend:latest
+
+```
+
 It tries to use any discovered GPU that is supported by pytorch, but it can run on CPU (*very* slowly)
 
 Tested:
