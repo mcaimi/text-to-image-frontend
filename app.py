@@ -21,27 +21,27 @@ RUN_LOCALLY = os.environ.get("RUN_LOCALLY", "no")
 # this is the inference method exposed by the KServe Model Server
 infer_endpoint = f"{INFER_URL}/v1/models/model:predict"
 
+# build the application object
+sd_app = FastAPI()
+
 # run locally?
 if RUN_LOCALLY == "yes":
     from libs.sd_ui_local import StableDiffusionUI, GRADIO_CUSTOM_PATH
     # build gradio ui object
     sd_ui = StableDiffusionUI()
     sd_ui.buildUi()
+
+    # add a root path
+    @sd_app.get("/")
+    async def get_root():
+        # Redirect to the main Gradio App
+        return RedirectResponse(url=GRADIO_CUSTOM_PATH, status_code=status.HTTP_302_FOUND)
 else:
     from libs.sd_ui_remote import StableDiffusionUI, GRADIO_CUSTOM_PATH
     from libs.callbacks import generate_image
     # build gradio ui object
     sd_ui = StableDiffusionUI(infer_endpoint)
     sd_ui.buildUi(func_callback=generate_image)
-
-# build the application object
-sd_app = FastAPI()
-
-# add a root path
-@sd_app.get("/")
-async def get_root():
-    # Redirect to the main Gradio App
-    return RedirectResponse(url=GRADIO_CUSTOM_PATH, status_code=status.HTTP_302_FOUND)
 
 # attach gradio app
 sd_ui.registerFastApiEndpoint(sd_app)
