@@ -5,7 +5,6 @@ import base64
 try:
     import requests
     from PIL import Image
-    from torch import Generator
     import random
     import io
 except Exception as e:
@@ -101,35 +100,3 @@ def generate_image(url, prompt,
     # return image bytes
     return Image.open(io.BytesIO(img_data)), kserve_request
 
-# callback for sd generation on a local machine
-def local_prediction(model_pipeline,
-                 prompt,
-                 negative_prompt="",
-                 steps=10,
-                 width=512, height=512,
-                 guidance_scale=7,
-                 seed=-1,
-                 accelerator="cpu"):
-    # prepare generator object
-    if seed==-1:
-        gen = Generator(accelerator).manual_seed(random.getrandbits(RANDOM_BIT_LENGTH))
-    else:
-        gen = Generator(accelerator).manual_seed(seed)
-
-
-    # generate image from prompt
-    prediction = model_pipeline(prompt=prompt,
-                                negative_prompt=negative_prompt,
-                                num_inference_steps=steps,
-                                width=width,
-                                height=height,
-                                guidance_scale=guidance_scale,
-                                generator=gen)
-
-    # generation metagada payload
-    metadata = prepare_payload(prompt=prompt,
-                               negative_prompt=negative_prompt,
-                               steps=steps, width=width, height=height,
-                               cfg=guidance_scale, seed=seed)
-
-    return prediction.images[0], metadata
