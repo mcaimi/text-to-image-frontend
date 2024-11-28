@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 # load libraries
-import os,sys
+import os
+import sys
 try:
     from fastapi import FastAPI
     from fastapi.responses import RedirectResponse
@@ -17,7 +18,6 @@ except Exception as e:
 # this actually is the entry point that openshift exposes to hide the containerized workload
 # KServe is serverless actually
 INFER_URL = os.environ.get("INFER_URL", "localhost")
-MODEL_NAME = os.environ.get("MODEL_NAME", "DreamShaper_8_pruned.safetensors")
 
 # this is the inference method exposed by the KServe Model Server
 infer_endpoint = f"{INFER_URL}/v1/models/model:predict"

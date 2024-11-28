@@ -3,9 +3,7 @@ FROM registry.access.redhat.com/ubi9/python-311:1-62
 # By default, listen on port 8080
 EXPOSE 8000/tcp
 ENV PORT=8000
-ENV INFER_URL="localhost/v1/models/model:predict"
-ENV MODEL_NAME="DreamShaper_8_pruned.safetensors"
-ENV RUN_LOCALLY="no"
+ENV INFER_URL="http://localhost:8080/v1/models/model:predict"
 
 # Set the working directory in the container
 WORKDIR /projects

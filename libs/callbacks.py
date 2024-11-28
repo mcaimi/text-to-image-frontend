@@ -26,17 +26,19 @@ RANDOM_BIT_LENGTH = 64
 #        "height": 512,
 #        "guidance_scale": 7,
 #        "seed": 772847624537827,
+#        "scheduler": "DPM++ 2M",
 #      }
 #    ]
 #  }
 
 # prepare the payload
 def prepare_payload(prompt,
-                 negative_prompt="",
-                 steps=10,
-                 width=512, height=512,
-                 cfg=7,
-                 seed=-1):
+                    negative_prompt="",
+                    steps=10,
+                    width=512, height=512,
+                    cfg=7,
+                    seed=-1,
+                    scheduler="DPM++ 2M"):
     # prepare seed
     if seed == -1:
         custom_seed = random.getrandbits(RANDOM_BIT_LENGTH)
@@ -56,6 +58,7 @@ def prepare_payload(prompt,
                 "height": height,
                 "guidance_scale": cfg,
                 "seed": custom_seed,
+                "scheduler": scheduler,
             }
         ]
     }
@@ -77,17 +80,18 @@ def rest_request(url, json_data,
 
 # build the callback function
 def generate_image(url, prompt,
-                 negative_prompt="",
-                 steps=10,
-                 width=512, height=512,
-                 cfg=7,
-                 seed=-1,
-                 timeout=600,
-                 tls_verify=False):
+                   negative_prompt="",
+                   steps=10,
+                   width=512, height=512,
+                   cfg=7,
+                   seed=-1,
+                   scheduler="DPM++ 2M",
+                   timeout=600,
+                   tls_verify=False):
     # build request payload
     kserve_request = prepare_payload(prompt, negative_prompt=negative_prompt,
-                                   steps=steps, width=width, height=height,
-                                   cfg=cfg, seed=seed)
+                                     steps=steps, width=width, height=height,
+                                     cfg=cfg, seed=seed, scheduler=scheduler)
 
     # call the generation function
     kserve_response = rest_request(url, json_data=kserve_request, tls_verify=tls_verify, timeout=timeout)
@@ -99,4 +103,3 @@ def generate_image(url, prompt,
 
     # return image bytes
     return Image.open(io.BytesIO(img_data)), kserve_request
-

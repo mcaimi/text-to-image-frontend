@@ -8,7 +8,14 @@ except Exception as e:
     raise e
 
 # define globals
-GRADIO_CUSTOM_PATH="/sdui"
+GRADIO_CUSTOM_PATH = "/sdui"
+schedulers = ["DPM++ 2M",
+              "DPM++ SDE",
+              "DPM2",
+              "Euler a",
+              "Euler",
+              "Heun",
+              "LMS"]
 
 class StableDiffusionUI(object):
     def __init__(self, inference_endpoint):
@@ -19,8 +26,8 @@ class StableDiffusionUI(object):
     def html_component(self, path):
         try:
             with open(path) as x:
-                return "".join([ i.strip() for i in x.readlines()])
-        except:
+                return "".join([i.strip() for i in x.readlines()])
+        except Exception:
             raise gr.Error(f"Html Component {path} not found", duration=5)
 
     # build the user interface object
@@ -40,6 +47,7 @@ class StableDiffusionUI(object):
                         steps = gr.Slider(label="Denoising Steps", value=5, minimum=1, maximum=100, step=1)
                         cfg = gr.Slider(label="Guidance Scale", value=7, minimum=1, maximum=100, step=0.5)
                         seed = gr.Number(label="Seed", value=-1)
+                        scheduler_dropdown = gr.Dropdown(scale=2, min_width=300, multiselect=False, label="Scheduler", choices=schedulers, value="DPM++ 2M")
                         with gr.Row():
                             width = gr.Number(label="Width", value=512)
                             height = gr.Number(label="Height", value=512)
@@ -49,7 +57,7 @@ class StableDiffusionUI(object):
                         json_out = gr.JSON(label="Generation Parameters")
 
             # attach function callbacks
-            submit_btn.click(fn=func_callback, inputs=[endpoint, prompt, negative_prompt, steps, width, height, cfg, seed], outputs=[output_image, json_out], api_name=False)
+            submit_btn.click(fn=func_callback, inputs=[endpoint, prompt, negative_prompt, steps, width, height, cfg, seed, scheduler_dropdown], outputs=[output_image, json_out], api_name=False)
             clear_btn.add(components=[prompt, negative_prompt, steps, width, height, cfg, seed])
 
         self.sd_ui = sdInterface
