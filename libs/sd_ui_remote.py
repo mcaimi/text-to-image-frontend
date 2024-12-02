@@ -64,4 +64,4 @@ class StableDiffusionUI(object):
 
     # register application in FastAPI
     def registerFastApiEndpoint(self, fastApiApp, path=GRADIO_CUSTOM_PATH):
-        fastApiApp = gr.mount_gradio_app(fastApiApp, self.sd_ui, path=path)
+        fastApiApp = gr.mount_gradio_app(fastApiApp, self.sd_ui, path=path, root_path=path)
